@@ -14,34 +14,18 @@ const currentPage = ref<number>(1);
 const totalPages = ref<number>(1);
 const totalResults = ref<number>(0);
 
-const isLoading = ref<boolean>(false);
-const error = ref<Error | null>(null);
 const sortOrder = ref<'none' | 'desc' | 'asc'>('none');
 
-async function fetchMovies(page: number) {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    const apiUrl = `/api/movies?page=${page}&sort=${sortOrder.value}`;
-    const { data, error: fetchError } = await useFetch<SearchResults>(apiUrl);
-    if (fetchError.value) {
-      throw fetchError.value;
-    }
-    if (data.value) {
-      movies.value = data.value.results;
-      totalPages.value = data.value.total_pages;
-      totalResults.value = data.value.total_results;
-    }
-  } catch (err) {
-    error.value = err as Error;
-  } finally {
-    isLoading.value = false;
-  }
-}
+const { data, status, error } = await useFetch<SearchResults>(() => `/api/movies?page=${currentPage.value}&sort=${sortOrder.value}`, {
+  watch: [currentPage, sortOrder]
+});
 
-fetchMovies(currentPage.value);
-watch(currentPage, (newPage) => {
-  fetchMovies(newPage);
+watchEffect(() => {
+  if (data.value) {
+    movies.value = data.value.results;
+    totalPages.value = data.value.total_pages;
+    totalResults.value = data.value.total_results;
+  }
 });
 </script>
 
@@ -69,8 +53,8 @@ watch(currentPage, (newPage) => {
     <div class="p-4 flex justify-center">
       <Pagination :currentPage="currentPage" :totalPages="totalPages" @update:currentPage="currentPage = $event" />
     </div>
-    <div v-if="isLoading" class="text-center mt-4">Loading...</div>
-    <div v-if="error" class="text-center mt-4 text-red-600">Error: {{ error.message }}</div>
+    <div v-if="status === 'pending'" class="text-center mt-4">Loading...</div>
+    <div v-if="error" class="text-center mt-4 text-red-600">Unable to load movies. Please check your connection.</div>
   </div>
 </template>
 

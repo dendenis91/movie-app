@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-const user = await useSupabaseUser();
+const user = ref(null); // Authentication is currently disabled
 import { useRouter } from 'vue-router'
 import { useSearch } from '~/composables/useSearch'
 const { searchQuery, results, loading, error } = useSearch()
@@ -79,5 +79,3 @@ async function handleClear() {
     </footer>
   </div>
 </template>
-<script setup lang="ts">
-</script>
